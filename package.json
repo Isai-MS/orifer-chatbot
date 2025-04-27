@@ -1,0 +1,12 @@
+{
+  "name": "orifer-chatbot",
+  "version": "1.0.0",
+  "description": "Chatbot de WhatsApp para Orifer Piel",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
