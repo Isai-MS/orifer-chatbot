@@ -1,36 +1,48 @@
-const express = require('express');
-const app = express();
-app.use(express.json());
+// Código para responder mensajes en WhatsApp
 
-app.get('/ping', (req, res) => {
-  res.send({ message: 'Bot activo' });
-});
+exports.handler = function(context, event, callback) {
+  const twiml = new Twilio.twiml.MessagingResponse();
 
-app.post('/webhook', (req, res) => {
-  const message = req.body.Body?.toLowerCase() || '';
+  // Lo que el cliente escribe
+  const incomingMessage = event.Body ? event.Body.trim() : "";
 
-  let reply = 'Hola, gracias por contactar a Orifer Piel. ¿En qué podemos ayudarte?';
+  // Convertir a minúsculas para que no importe cómo escriban
+  const msg = incomingMessage.toLowerCase();
 
-  if (message.includes('chamarra') || message.includes('modelo')) {
-    reply = `Estos son algunos modelos:\n\nDama:\n- Francia\n- Boston\n- Sinaí\n- Rockera\n- Levis\n\nCaballero:\n- Gladiador\n- Motociclista\n- Levis\n- Berlín\n\nPrecios:\n- Dama: $1790 MXN\n- Caballero: $1890 MXN\n\nColores: tinto, canela, miel, azul mezclilla, negro.`;
+  if (msg === "1") {
+    twiml.message(`🧥 Catálogo de chamarras:
+
+Modelos Dama: Francia, Boston, Sinaí, Rockera, Levis
+Modelos Caballero: Gladiador, Motociclista, Levis, Berlín
+
+Tallas disponibles: S, M, L, XL, XXL (Tallas extra: costo adicional)
+Colores: Tinto, Canela, Miel, Azul Mezclilla, Negro
+`);
+  } else if (msg === "2") {
+    twiml.message(`💵 Precios y Envíos:
+
+Precios:
+- Dama: $1,790 MXN
+- Caballero: $1,890 MXN
+
+Métodos de pago: Transferencia, MercadoPago, PayPal, Depósito bancario.
+
+Costo de envío: Varía según destino. Por favor, proporciónanos tu ubicación para cotizar el envío.
+`);
+  } else if (msg === "3") {
+    twiml.message(`👨‍💼 Gracias por tu interés. Un asesor se pondrá en contacto contigo pronto. ¡Orifer Piel agradece tu preferencia!`);
+  } else {
+    // Respuesta por defecto si no escriben 1, 2 o 3
+    twiml.message(`¡Hola! Bienvenido a *Orifer Piel* 👋🏼
+
+¿Qué deseas hacer hoy?
+
+1️⃣ Ver catálogo de chamarras  
+2️⃣ Saber precios y envíos  
+3️⃣ Hablar con un asesor
+
+(Responde con el número de la opción que quieras.)`);
   }
 
-  if (message.includes('pago') || message.includes('transferencia')) {
-    reply = `Aceptamos pagos por transferencia, Mercado Pago, PayPal y depósitos bancarios.`;
-  }
-
-  if (message.includes('envío') || message.includes('entrega')) {
-    reply = `Costo de envío depende del destino. Proporciónanos tu ubicación para cotizarlo.`;
-  }
-
-  res.send(`
-    <Response>
-      <Message>${reply}</Message>
-    </Response>
-  `);
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('Servidor funcionando en puerto', PORT);
-});
+  callback(null, twiml);
+};
