@@ -1,48 +1,33 @@
-// Código para responder mensajes en WhatsApp
+const express = require('express');
+const app = express();
+app.use(express.json());
 
-exports.handler = function(context, event, callback) {
-  const twiml = new Twilio.twiml.MessagingResponse();
+// Usamos el puerto dinámico de Render
+const PORT = process.env.PORT || 10000;
 
-  // Lo que el cliente escribe
-  const incomingMessage = event.Body ? event.Body.trim() : "";
+app.post('/demo-reply', (req, res) => {
+    const mensajeUsuario = req.body.Body.toLowerCase();
+    let respuesta;
 
-  // Convertir a minúsculas para que no importe cómo escriban
-  const msg = incomingMessage.toLowerCase();
+    if (mensajeUsuario.includes('catalogo')) {
+        respuesta = '📚 Nuestro catálogo de modelos de dama: Francia, Boston, Sinaí, Rockera, Levis. Modelos de caballero: Gladiador, Motociclista, Levis, Berlín.';
+    } else if (mensajeUsuario.includes('precio')) {
+        respuesta = '💵 Precio dama: $1790 MXN, caballero: $1890 MXN. Contamos con tallas extra (costo adicional).';
+    } else if (mensajeUsuario.includes('envio') || mensajeUsuario.includes('envíos')) {
+        respuesta = '🚚 Envíos a todo México. El costo varía según el destino. ¡Contáctanos para cotizar!';
+    } else {
+        respuesta = '👋 Hola, gracias por contactar a Orifer Piel. ¿En qué puedo ayudarte? Puedes preguntarme sobre catálogo, precios o envíos.';
+    }
 
-  if (msg === "1") {
-    twiml.message(`🧥 Catálogo de chamarras:
+    res.send({
+        message: respuesta
+    });
+});
 
-Modelos Dama: Francia, Boston, Sinaí, Rockera, Levis
-Modelos Caballero: Gladiador, Motociclista, Levis, Berlín
+app.get('/', (req, res) => {
+    res.send('Servidor funcionando correctamente.');
+});
 
-Tallas disponibles: S, M, L, XL, XXL (Tallas extra: costo adicional)
-Colores: Tinto, Canela, Miel, Azul Mezclilla, Negro
-`);
-  } else if (msg === "2") {
-    twiml.message(`💵 Precios y Envíos:
-
-Precios:
-- Dama: $1,790 MXN
-- Caballero: $1,890 MXN
-
-Métodos de pago: Transferencia, MercadoPago, PayPal, Depósito bancario.
-
-Costo de envío: Varía según destino. Por favor, proporciónanos tu ubicación para cotizar el envío.
-`);
-  } else if (msg === "3") {
-    twiml.message(`👨‍💼 Gracias por tu interés. Un asesor se pondrá en contacto contigo pronto. ¡Orifer Piel agradece tu preferencia!`);
-  } else {
-    // Respuesta por defecto si no escriben 1, 2 o 3
-    twiml.message(`¡Hola! Bienvenido a *Orifer Piel* 👋🏼
-
-¿Qué deseas hacer hoy?
-
-1️⃣ Ver catálogo de chamarras  
-2️⃣ Saber precios y envíos  
-3️⃣ Hablar con un asesor
-
-(Responde con el número de la opción que quieras.)`);
-  }
-
-  callback(null, twiml);
-};
+app.listen(PORT, () => {
+    console.log(`Servidor funcionando en puerto ${PORT}`);
+});
