@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const axios = require('axios');
 const { MessagingResponse } = require('twilio').twiml;
 
 const app = express();
@@ -8,64 +9,51 @@ const PORT = process.env.PORT || 10000;
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get('/', (req, res) => {
-  res.send('Servidor funcionando correctamente.');
+  res.send('🤖 Chatbot Orifer Piel está funcionando con IA');
 });
 
-app.post('/demo-reply', (req, res) => {
-  const msg = req.body.Body ? req.body.Body.toLowerCase() : '';
+app.post('/demo-reply', async (req, res) => {
+  const userMessage = req.body.Body?.trim();
   const twiml = new MessagingResponse();
 
-  let respuesta = '';
+  try {
+    // Llama a la API de OpenAI (ChatGPT)
+    const gptResponse = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo', // puedes usar 'gpt-4' si tu cuenta lo permite
+        messages: [
+          {
+            role: 'system',
+            content: `Eres un asistente para una tienda de chamarras de piel llamada Orifer Piel. Contesta con educación y ayuda a los clientes a resolver dudas sobre productos, precios, pagos, envíos y ubicación.`,
+          },
+          {
+            role: 'user',
+            content: userMessage,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 300,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-  if (msg.includes('hola') || msg.includes('buenos') || msg.includes('qué tal')) {
-    respuesta = '👋 ¡Hola! Bienvenido a Orifer Piel. ¿En qué puedo ayudarte hoy?\n' +
-                'Puedes preguntarme por:\n' +
-                '- Catálogo\n' +
-                '- Precios\n' +
-                '- Envíos\n' +
-                '- Ubicación\n' +
-                '- Garantía\n' +
-                '- Formas de pago';
-  } else if (msg.includes('catalogo') || msg.includes('catálogo') || msg.includes('modelos')) {
-    respuesta = '📚 Catálogo de chamarras:\n\n' +
-                '👩 Dama: Francia, Boston, Sinaí, Rockera, Levis\n' +
-                '👨 Caballero: Gladiador, Motociclista, Levis, Berlín\n\n' +
-                'Tallas: S a XXL (tallas extra con costo adicional)\n' +
-                'Colores: Tinto, Canela, Miel, Azul Mezclilla, Negro.';
-  } else if (msg.includes('precio') || msg.includes('cuánto cuesta')) {
-    respuesta = '💵 Precios:\n' +
-                '- Dama: $1,790 MXN\n' +
-                '- Caballero: $1,890 MXN\n' +
-                'Tallas extra tienen costo adicional.';
-  } else if (msg.includes('envio') || msg.includes('envíos') || msg.includes('enviar')) {
-    respuesta = '📦 Enviamos a todo México y al extranjero. El costo depende del destino. Indícanos tu ubicación para cotizar.';
-  } else if (msg.includes('ubicacion') || msg.includes('dirección') || msg.includes('donde están')) {
-    respuesta = '📍 Tienda física: Plaza Polar, conjunto estrella L-26.\n' +
-                'También puedes comprar en línea.';
-  } else if (msg.includes('garantia') || msg.includes('garantía')) {
-    respuesta = '✅ Nuestras chamarras tienen garantía por defectos de fabricación. Cambios dentro de 15 días con comprobante.';
-  } else if (msg.includes('pago') || msg.includes('pagos')) {
-    respuesta = '💳 Aceptamos transferencia, Mercado Pago, PayPal y depósito bancario.';
-  } else {
-    respuesta = '🤖 No entendí tu mensaje. Pregúntame por:\n' +
-                '- Catálogo\n' +
-                '- Precios\n' +
-                '- Envíos\n' +
-                '- Ubicación\n' +
-                '- Garantía\n' +
-                '- Pagos';
+    const replyText = gptResponse.data.choices[0].message.content.trim();
+    twiml.message(replyText);
+  } catch (error) {
+    console.error('Error al conectar con OpenAI:', error.message);
+    twiml.message('Lo siento 😓, hubo un problema técnico al generar la respuesta. Intenta de nuevo en un momento.');
   }
 
-  twiml.message(respuesta);
   res.type('text/xml');
   res.send(twiml.toString());
 });
 
-// Manejo de errores
-process.on('uncaughtException', (err) => {
-  console.error('Error no capturado:', err);
-});
-
 app.listen(PORT, () => {
-  console.log(`Servidor funcionando en puerto ${PORT}`);
+  console.log(`Servidor funcionando con IA en puerto ${PORT}`);
 });
